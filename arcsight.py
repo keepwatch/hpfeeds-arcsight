@@ -2,7 +2,7 @@
 
 def format(message):
     tmpmsg = dict(message)
-    mappingDict = {"src_ip": "src", "src_port": "spt", "dst_ip": "dst", "dst_port": "dpt", "proto": "transport", "direction": "deviceDirection", "vendor_product": "cs1", "ids_type": "cs2", "app": "ds3"}
+    mappingDict = {"src_ip": "src", "src_port": "spt", "dst_ip": "dst", "dst_port": "dpt", "transport": "proto", "direction": "deviceDirection", "vendor_product": "cs1", "ids_type": "cs2", "app": "ds3"}
     
     # Set required variables 
     name = tmpmsg['type']
@@ -18,13 +18,17 @@ def format(message):
         sev = 1
 
     # Set dynamic variables
-    outmsg = "CEF:0|ThreatStream|MHN|1.0|{}|{}|{}|".format(sig, name, sev)
+    outmsg = u"CEF:0|ThreatStream|MHN|1.0|{}|{}|{}|".format(sig, name, sev)
 
+    # Replace transport field with protocol value if blank
     if not tmpmsg['transport']:
         tmpmsg['transport'] = tmpmsg['protocol']
-
+        
+    # Iterate through remaining properties and append to outmsg
     for name, value in tmpmsg.items():
         if value and name in mappingDict:
+            if name == 'direction':
+                value = 0 if value == 'inbound' else 1
             outmsg += "{}={}".format(mappingDict[name], value)
             if mappingDict[name][:1] == "cs":
                 outmsg += "{}Label={}".format(mappingDict[name], name)
